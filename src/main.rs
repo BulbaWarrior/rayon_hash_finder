@@ -1,16 +1,32 @@
 use std::ops::Range;
 
+use clap::Parser;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
+#[derive(Parser, Debug)]
+struct Args {
+    #[arg(short = 'N')]
+    /// trailing zeros count
+    zeros: usize,
+    #[arg(short = 'F')]
+    /// number of hash values to find
+    target_count: usize,
+}
+
 fn main() {
-    let target_count = 6;
+    let args = Args::parse();
     let config = Miner {
-        zeros: 4,
-        batch_size: 100,
+        zeros: args.zeros,
+        batch_size: 100_000, // experimentally found to work best on my machine
     };
 
-    let res: Vec<_> = config.into_iter().take(target_count).collect();
-    dbg!(res);
+    let res = config.into_iter().take(args.target_count);
+
+    let hashes: Vec<String> = res
+        .map(|(num, hash)| format!(r#"{num}, "{hash}""#))
+        .collect();
+    let out = hashes.join("\n");
+    println!("{out}");
 }
 
 struct Miner {
